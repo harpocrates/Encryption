@@ -6,7 +6,7 @@ attacks. Note that RSA scales badly, and ECC should be used instead.
 
 ## General
 
-This is a toy implementation of RSA. Keys are generated using a file containing large prime numbers. Basic number theory functions are defined in another module called `NumberTheory`, which is imported by `RSA`.
+This is a toy implementation of RSA and ECC. RSA keys are generated using a file containing large prime numbers. Basic number theory functions are defined in another module called `NumberTheory`, which is imported by `RSA`.
 
 To use, import `RSA`. Then, encrypting the number `0123456789` and decrypting it again can be done using the following.
 
