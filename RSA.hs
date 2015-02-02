@@ -1,4 +1,4 @@
-module RSA (PublicKey, PrivateKey, generateRSAKey, generateRSAKey', encryptRSA, decryptRSA, loadPrimeNumbers) where
+module RSA (PublicKey, PrivateKey, generateRSAKey, encryptRSA, decryptRSA, loadPrimeNumbers) where
 
 import System.Random
 import System.IO
@@ -43,28 +43,12 @@ generateRSAKey primesList =
       let k = (a^^^b |% (p1-1)*(p2-1))
 
       -- Check our choice of k works. It should almost always (in the mathematical sense) work.
-      if checkPublicKey (p1,p2,k)
+      if cValidRSAKey (p1,p2,k)
         then return ((PrivateKey p1 p2 k), (PublicKey (p1*p2) k))
         else generateRSAKey primesList
   where
     -- make sure k and phi(n) are relatively prime
-    checkPublicKey (p1,p2,k) = (((p1-1)*(p2-1)) `gcd` k == 1) && (p1 /= p2)
-
-generateRSAKey' :: Integer -> Integer -> IO (PrivateKey, PublicKey)
-generateRSAKey' p1 p2 =
-    do
-      -- Choose a random k
-      a <- randomIO :: IO Integer
-      b <- randomIO :: IO Integer
-      let k = (a^^^b |% (p1-1)*(p2-1))
-
-      -- Check our choice of k works. It should almost always (in the mathematical sense) work.
-      if checkPublicKey (p1,p2,k)
-        then return ((PrivateKey p1 p2 k), (PublicKey (p1*p2) k))
-        else generateRSAKey' p1 p2
-  where
-    -- make sure k and phi(n) are relatively prime
-    checkPublicKey (p1,p2,k) = ((p1-1)*(p2-1)) `gcd` k == 1
+    checkValidRSAKey  (p1,p2,k) = (((p1-1)*(p2-1)) `gcd` k == 1) && (p1 /= p2)
 
 -- To encrypt, all you need is "a" (what to encrypt), "m" (the mod), and "k" (the power).
 -- The encryption map is (a -> a^k) (everything mod m).
