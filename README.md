@@ -16,7 +16,7 @@ import RSA
 main = do
          let plainText = 0123456789
          primesList <- loadPrimeNumbers                 -- load list of primes
-         (private, public) <- generateRSAKey primesList -- generate private and public key
+         (private, public) <- generateRSAKey primesList -- generate keys
 
          let cipherText     = encryptRSA plainText public  -- encrypt
              decipheredText = decryptRSA cipherText private -- decrypt
