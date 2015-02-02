@@ -14,7 +14,7 @@ To use, import `RSA`. Then, encrypting the number `0123456789` and decrypting it
 import RSA
 
 main = do
-         let plainText = 0123456789
+         let plainText = 123456789
          primesList <- loadPrimeNumbers                 -- load list of primes
          (private, public) <- generateRSAKey primesList -- generate keys
 
