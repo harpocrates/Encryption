@@ -21,8 +21,8 @@ loadPrimeNumbers =
 -- ==============
 
 -- Types representing public and private keys
-data PublicKey  = PublicKey  Integer Integer         -- (n k)
 data PrivateKey = PrivateKey Integer Integer Integer -- (p1 p2 k)
+data PublicKey  = PublicKey  Integer Integer         -- (n k)
 
 -- A RSA key is two primes p1 and p2, as well as a number k. Let n = p1*p2
 --  * to encrypt: m -> m^k (mod n)
