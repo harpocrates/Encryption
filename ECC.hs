@@ -1,21 +1,40 @@
-module ECC where
+module ECC (EllipticCurve, PrivateKey, PublicGeneralKey, PublicSpecificKey, PublicKey(PublicKey),
+            loadEllipticCurve, generateRandomPoint,
+            generateECCGeneralKey, generateECCSpecificKey,
+            encryptECC, decryptECC) where
 
 import System.Random
 import System.IO
+import Data.Maybe
 import NumberTheory
 
-ellipticCurvesFile = "ellipticCurves.txt"
+ellipticCurvesFile = "EllipticCurves.txt"
 
+-- Load a list of common elliptic curves. (These are recommended by
+-- [NIST](http://csrc.nist.gov/groups/ST/toolkit/documents/dss/NISTReCur.pdf))
+loadEllipticCurves :: IO [(String,EllipticCurve)]
+loadEllipticCurves =
+    do
+      file <- readFile ellipticCurvesFile
+      return $ map (\line -> read line :: (String, EllipticCurve)) (lines file)
+
+loadEllipticCurve :: String -> IO EllipticCurve
+loadEllipticCurve str = loadEllipticCurves >>= (return . (\ecs -> fromJust $ lookup str ecs))
+
+-- For an elliptic curve to form a group, we require that
 checkValidEllipticCurve :: (Integer, Integer, Integer) -> Bool
 checkValidEllipticCurve (a,b,p) = (4 * (a^^^3 |% p) + 27 * (b^^^2 |% p)) % p == 0
 
-data Point = Point Integer Integer | O deriving (Eq, Show)
+-- Discussion of [group theory](https://www.certicom.com/10-introduction)
+
+data Point = Point Integer Integer | O deriving (Eq, Show, Read)
 -- p    - base field prime
 -- a, b - define the elliptic curve in E/F_p (the elliptic curve is also referred to as E_p(a,b))
 -- g    - base point (hopefully a generator) on the elliptic curve
 -- n    - |g| (order of g)
 -- h    - |E/F_p|/|g| (ideally, if g is a generator, this is 1)
-data EllipticCurve = EllipticCurve Integer Integer Integer Point Integer Integer -- p a b g n h
+-- In order: p a b g n h
+data EllipticCurve = EllipticCurve Integer Integer Integer Point Integer Integer deriving(Show, Read)
 
 -- Elliptic curve operations over prime fields
 (<+>) :: Point -> Point -> EllipticCurve -> Point
@@ -98,49 +117,10 @@ decryptECC points ec private public
     in map (\(e_1, e_2) ->
                    (e_2 <+> (negative ((alpha <*> (e_1 <+> b_1 $ ec) $ ec) <+> b_a $ ec)) $ ec)) points
 
--------------------------------------------------------
+-- Brute Force Decryption
+-- ======================
 
 -- Find n such that n <*> p = q
 discreteLog :: Point -> Point -> EllipticCurve -> Integer
 discreteLog p q ec = let (_,n) = until (\(x,n) -> q==x) (\(x,n) -> (x <+> p $ ec, n+1)) (p,1) in n
 
-main = do
-          --putStrLn $ show $ (Point 2 0) <+> (Point 1 3) $ (EllipticCurve 17 1 7 (Point 1 2) 0 0)
-          --putStrLn $ show $ (Point 1 3) <+> (Point 1 3) $ (EllipticCurve 17 1 7 (Point 1 2) 0 0)
-          --putStrLn $ show $ 2 <*> (Point 1 3)           $ (EllipticCurve 17 1 7 (Point 1 2) 0 0)
-          --putStrLn $ show $ discreteLog (Point 16 5) (Point 4 5) (EllipticCurve 23 9 17 (Point 1 2) 0 0)
-          --putStrLn $ show $ 9 <*> (Point 16 5)          $ (EllipticCurve 23 9 17 (Point 1 2) 0 0)
-          --putStrLn $ show $ (negative (Point 16 5)) <+> (Point 16 5) $ (EllipticCurve 23 9 17 (Point 1 2) 0 0)
-
-          let p = 6277101735386680763835789423207666416083908700390324961279
-              a = -3
-              b = 0x64210519e59c80e70fa7e9ab72243049feb8deecc146b9b1
-              g = Point 0x188da80eb03090f67cbf20eb43a18800f4ff0afd82ff1012
-                        0x07192b95ffc8da78631011ed6b24cdd573f977a11e794811
-              n = 6277101735386680763835789423176059013767194773182842284081
-              h = 1
-              ec = EllipticCurve p a b g n h
-
-          c <- generateRandomPoint ec
-
-          (private_a, public_general_a) <- generateECCGeneralKey ec c
-          (private_b, public_general_b) <- generateECCGeneralKey ec c
-
-          let public_a_for_b = generateECCSpecificKey ec private_a public_general_b
-              public_b_for_a = generateECCSpecificKey ec private_b public_general_a
-
-              public_a = PublicKey public_general_a public_a_for_b
-              public_b = PublicKey public_general_b public_b_for_a
-
-          m1 <- generateRandomPoint ec
-          m2 <- generateRandomPoint ec
-          m3 <- generateRandomPoint ec
-          m4 <- generateRandomPoint ec
-
-          let plaintext = [m1,m2,m3,m4]
-          putStrLn $ show $ plaintext
-
-          encrypted <-    encryptECC plaintext ec private_a public_b
-          let decrypted = decryptECC encrypted ec private_b public_a
-
-          putStrLn $ show $ decrypted

@@ -1,11 +1,11 @@
 import RSA
 
--- Sample of encryption/decryption
--- ===============================
+-- Sample of RSA encryption/decryption
+-- ===================================
 main = do
          primesList <- loadPrimeNumbers
 
-         (private, public) <-generateRSAKey primesList
+         (private, public) <- generateRSAKey primesList
 
          putStrLn $ show $ decryptRSA (encryptRSA 666000666 public) private
          putStrLn $ show $ decryptRSA (encryptRSA 696969696 public) private

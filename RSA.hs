@@ -12,10 +12,7 @@ loadPrimeNumbers :: IO [Integer]
 loadPrimeNumbers =
     do
       file <- readFile primeNumbersFile
-      let lines = splitLines file
-      return $ map (\line -> read line :: Integer) lines
-  where splitLines str = let (line, rest) = break (=='\n') str
-                         in if (null rest) then [line] else line:(splitLines (tail rest))
+      return $ map (\line -> read line :: Integer) (lines file)
 
 -- RSA Encryption
 -- ==============
@@ -43,7 +40,7 @@ generateRSAKey primesList =
       let k = (a^^^b |% (p1-1)*(p2-1))
 
       -- Check our choice of k works. It should almost always (in the mathematical sense) work.
-      if cValidRSAKey (p1,p2,k)
+      if checkValidRSAKey (p1,p2,k)
         then return ((PrivateKey p1 p2 k), (PublicKey (p1*p2) k))
         else generateRSAKey primesList
   where
